@@ -17,6 +17,7 @@ FOREIGN_KEY_FULLNAME: Final = "django.db.models.fields.related.ForeignKey"
 ONETOONE_FIELD_FULLNAME: Final = "django.db.models.fields.related.OneToOneField"
 MANYTOMANY_FIELD_FULLNAME: Final = "django.db.models.fields.related.ManyToManyField"
 DUMMY_SETTINGS_BASE_CLASS: Final = "django.conf._DjangoConfLazyObject"
+DEFAULT_SETTINGS_CLASS: Final = "django.conf._DjangoSettings"
 AUTH_USER_MODEL_FULLNAME: Final = "django.conf.settings.AUTH_USER_MODEL"
 
 QUERYSET_CLASS_FULLNAME: Final = "django.db.models.query.QuerySet"

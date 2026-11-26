@@ -322,7 +322,8 @@ class NewSemanalDjangoPlugin(Plugin):
         class_name, _, attr_name = fullname.rpartition(".")
 
         # Lookup of a settings variable
-        if class_name == fullnames.DUMMY_SETTINGS_BASE_CLASS:
+        # The stubs declare Django's default settings for other type checkers; the project's settings win.
+        if class_name in {fullnames.DUMMY_SETTINGS_BASE_CLASS, fullnames.DEFAULT_SETTINGS_CLASS}:
             return partial(
                 settings.get_type_of_settings_attribute,
                 django_context=self.django_context,
