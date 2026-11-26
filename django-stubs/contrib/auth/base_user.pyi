@@ -2,6 +2,7 @@ import datetime as dt
 from collections.abc import Iterable
 from typing import Any, ClassVar, Literal, overload
 
+from django._mypy import MYPY
 from django.db import models
 from django.db.models.base import Model
 from django.db.models.fields import BooleanField
@@ -20,8 +21,13 @@ class BaseUserManager(models.Manager[_T, _QS_co]):
 class AbstractBaseUser(models.Model):
     REQUIRED_FIELDS: ClassVar[list[str]]
 
-    class Meta:
-        abstract: ClassVar[bool]
+    # Typed for mypy only: other checkers report a subclass's own `class Meta:` as an incompatible override.
+    if MYPY:  # ruff: ignore[complex-if-statement-in-stub]
+        class Meta:
+            abstract: ClassVar[bool]
+
+    else:
+        Meta: Any
 
     password: models.CharField[str | int, str]
     last_login: models.DateTimeField[str | dt.datetime | dt.date | None, dt.datetime | None]

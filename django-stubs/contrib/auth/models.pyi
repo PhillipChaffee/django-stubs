@@ -2,6 +2,7 @@ import datetime as dt
 from collections.abc import Iterable
 from typing import Any, ClassVar, Literal, Never, Self, TypeAlias
 
+from django._mypy import MYPY
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth.base_user import AbstractBaseUser as AbstractBaseUser
 from django.contrib.auth.base_user import BaseUserManager as BaseUserManager
@@ -94,8 +95,13 @@ class PermissionsMixin(models.Model):
     groups = models.ManyToManyField(Group)
     user_permissions = models.ManyToManyField(Permission)
 
-    class Meta:
-        abstract: ClassVar[bool]
+    # Typed for mypy only: other checkers report a subclass's own `class Meta:` as an incompatible override.
+    if MYPY:  # ruff: ignore[complex-if-statement-in-stub]
+        class Meta:
+            abstract: ClassVar[bool]
+
+    else:
+        Meta: Any
 
     def get_user_permissions(self, obj: Model | None = ...) -> set[str]: ...
     async def aget_user_permissions(self, obj: Model | None = ...) -> set[str]: ...
@@ -113,10 +119,15 @@ class PermissionsMixin(models.Model):
 class AbstractUser(AbstractBaseUser, PermissionsMixin):
     username_validator: UnicodeUsernameValidator
 
-    class Meta:
-        abstract: ClassVar[bool]
-        verbose_name: ClassVar[str]
-        verbose_name_plural: ClassVar[str]
+    # Typed for mypy only: other checkers report a subclass's own `class Meta:` as an incompatible override.
+    if MYPY:  # ruff: ignore[complex-if-statement-in-stub]
+        class Meta:
+            abstract: ClassVar[bool]
+            verbose_name: ClassVar[str]
+            verbose_name_plural: ClassVar[str]
+
+    else:
+        Meta: Any
 
     username: models.CharField[str | int, str]
     first_name: models.CharField[str | int, str]
