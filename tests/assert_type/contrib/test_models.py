@@ -37,6 +37,7 @@ def flatpage_fields_are_inferred() -> None:
 def redirect_fields_are_inferred() -> None:
     redirect = Redirect()
     assert_type(redirect.site, Site)
+    assert_type(redirect.site_id, int)
     assert_type(redirect.old_path, str)
     assert_type(redirect.new_path, str)
 
@@ -102,6 +103,8 @@ def reverse_accessors_between_contrib_models_are_declared() -> None:
     assert_type(ContentType().permission_set.get(), Permission)
     assert_type(ContentType().logentry_set.get(), LogEntry)
     assert_type(User().logentry_set.get(), LogEntry)
+    assert_type(Site().redirect_set.get(), Redirect)
+    assert_type(Site().flatpage_set.get(), FlatPage)
 
 
 def reverse_accessors_to_the_user_model_are_declared() -> None:
