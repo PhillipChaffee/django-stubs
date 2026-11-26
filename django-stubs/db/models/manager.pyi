@@ -56,6 +56,11 @@ class BaseManager(Generic[_T_co, _QS_co]):
     # Mirrors `ManagerDescriptor`: a manager is unreachable from an instance of its own model, but stays reachable
     # from anything else (plain classes, protocols, other models' instances). An unparametrized manager solves `_M`
     # to `Any`, so the `None` overload keeps class access reachable and `cls: type[Model]` plain-class access.
+    # `objects = models.Manager()` in a model body leaves the model unsolved: bind it to the class the manager is
+    # read from, which is also right for subclasses (`Novel.objects` for `class Novel(Book)`). `_HasModel` is
+    # invariant, so a manager declared for a model (`Manager[Book]`) skips this overload and stays `Self`.
+    @overload
+    def __get__(self: _HasModel[Model], instance: None, cls: type[_M]) -> Manager[_M]: ...
     @overload
     def __get__(self, instance: None, cls: type[Any] | None = None) -> Self: ...
     @overload

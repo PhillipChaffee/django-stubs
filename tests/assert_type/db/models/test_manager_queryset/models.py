@@ -202,5 +202,6 @@ class SiteUser(TenantUser):
 
 
 def inherited_custom_manager_method() -> None:
-    SiteUser.objects.create_user("foo@mail.com", "password", is_staff=True)
-    SiteUser.objects.create_user("foo@mail.com", "password", is_staff=12)  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]  # pyrefly: ignore[bad-argument-type]  # ty: ignore[invalid-argument-type]
+    # `TenantUserManager` has no type arguments, so `__get__` binds it to a plain `Manager[SiteUser]`
+    SiteUser.objects.create_user("foo@mail.com", "password", is_staff=True)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]  # pyrefly: ignore[missing-attribute]  # ty: ignore[missing-attribute]
+    SiteUser.objects.create_user("foo@mail.com", "password", is_staff=12)  # type: ignore[arg-type]  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]  # pyrefly: ignore[missing-attribute]  # ty: ignore[missing-attribute]
