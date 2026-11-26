@@ -101,10 +101,11 @@ def get_values_list_row_type(
     annotation_types: dict[str, MypyType],
     flat: bool,
     named: bool,
-) -> MypyType:
+) -> MypyType | None:
+    """Return `None` when the field names aren't literals, the stub overloads then give the row type."""
     field_lookups = resolve_field_lookups(ctx.args[0], django_context)
     if field_lookups is None:
-        return AnyType(TypeOfAny.from_error)
+        return None
 
     typechecker_api = helpers.get_typechecker_api(ctx)
     model_info = helpers.lookup_class_typeinfo(typechecker_api, model_cls)
@@ -222,6 +223,8 @@ def extract_proper_type_queryset_values_list(ctx: MethodContext, django_context:
         flat=flat,
         named=named,
     )
+    if row_type is None:
+        row_type = default_return_type.args[1]
     ret = _queryset_subclass_with_row(ctx, row_type) or default_return_type.copy_modified(
         args=[django_model.typ, row_type]
     )

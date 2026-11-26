@@ -62,3 +62,24 @@ async def async_queryset_methods_keep_the_row_type(qs: QuerySet[Blog], manager: 
     assert_type(manager.aiterator(), AsyncIterator[Blog])
     async for blog in qs:
         assert_type(blog, Blog)
+
+
+def values_list_row_shapes(field: str) -> None:
+    # The mypy plugin resolves literal field names to the field types; these are the shapes without it
+    assert_type(Blog.objects.values_list(field).get(), tuple[Any, ...])
+    assert_type(Blog.objects.all().values_list(field, field).get(), tuple[Any, ...])
+    assert_type(Blog.objects.values_list(field, flat=True).get(), Any)
+    # `flat=True` without fields returns the primary keys, the mypy plugin resolves their type
+    assert_type(Blog.objects.values_list(flat=True).get(), Any)  # type: ignore[assert-type]
+    assert_type(Blog.objects.values_list(field, named=True).get(), Any)
+
+
+def values_list_rejects_invalid_flag_combinations(field: str) -> None:
+    # Django raises `TypeError` for both calls, they match the deprecated fallback overload
+    Blog.objects.values_list(field, field, flat=True)  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]  # ty: ignore[deprecated]  # pyrefly: ignore[deprecated]
+    # The mypy plugin reports its own error when it can read the arguments
+    Blog.objects.all().values_list(field, flat=True, named=True)  # type: ignore[misc]  # pyright: ignore[reportDeprecated]  # ty: ignore[deprecated]  # pyrefly: ignore[deprecated]
+
+
+def values_list_with_non_literal_flag_is_deprecated(field: str, flag: bool) -> None:
+    assert_type(Blog.objects.values_list(field, flat=flag), QuerySet[Blog, Any])  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]  # ty: ignore[deprecated]  # pyrefly: ignore[deprecated]
