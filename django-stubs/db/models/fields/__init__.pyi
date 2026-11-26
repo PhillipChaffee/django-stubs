@@ -1788,13 +1788,15 @@ class AutoFieldMixin:
 
 class AutoFieldMeta(type): ...
 
-_ST_Auto_contra = TypeVar("_ST_Auto_contra", contravariant=True, default=int | str)
+# `None` is accepted on write: saving an instance whose primary key is `None` inserts a new row, which is
+# how Django copies a model instance. Reads stay `int`, as a saved instance always has a primary key.
+_ST_Auto_contra = TypeVar("_ST_Auto_contra", contravariant=True, default=int | str | None)
 _GT_Auto_co = TypeVar("_GT_Auto_co", covariant=True, default=int)
 
 class AutoField(AutoFieldMixin, IntegerField[_ST_Auto_contra, _GT_Auto_co], metaclass=AutoFieldMeta):  # type: ignore[misc]
     _pyi_lookup_exact_type: str | int
     # pyrefly types the implicit `id` from these, not from the type parameters. TODO: drop once it does.
-    _pyi_private_set_type: int | str
+    _pyi_private_set_type: int | str | None
     _pyi_private_get_type: int
 
 class BigAutoField(AutoFieldMixin, BigIntegerField[_ST_Auto_contra, _GT_Auto_co]): ...  # type: ignore[misc]

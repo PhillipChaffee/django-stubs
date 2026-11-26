@@ -362,6 +362,9 @@ class AddRelatedModelsId(ModelClassInitializer):
             set_type, get_type = get_field_descriptor_types(
                 field_info, self.api, is_set_nullable=field.null, is_get_nullable=field.null
             )
+            if not field.null:
+                # An auto field's set type accepts `None` (to copy a row), but a non-null foreign key column doesn't.
+                set_type = helpers.remove_optional_type(set_type)
             self.add_new_var_to_model_class(field.attname, Instance(field_info, [set_type, get_type]))
 
 

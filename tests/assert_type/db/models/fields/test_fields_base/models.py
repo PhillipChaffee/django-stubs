@@ -42,6 +42,26 @@ def test_do_not_add_id_if_field_with_primary_key_True_defined() -> None:
     CustomPrimaryKey().id  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]  # pyrefly: ignore[missing-attribute]  # ty: ignore[missing-attribute]
 
 
+class BigAutoPrimaryKey(models.Model):
+    id = models.BigAutoField(primary_key=True)
+
+
+def clearing_the_auto_primary_key_copies_the_row() -> None:
+    # Saving an instance whose primary key is `None` inserts a new row:
+    # https://docs.djangoproject.com/en/stable/topics/db/queries/#copying-model-instances
+    booking = Booking()
+    booking.id = None
+    BigAutoPrimaryKey().id = None
+    SmallAuto().small = None
+    # pyrefly types the `pk` and implicit `id` it adds with the read type, so it rejects `None` here.
+    booking.pk = None  # pyrefly: ignore[bad-assignment]
+    NoPrimaryKey().pk = None  # pyrefly: ignore[bad-assignment]
+    NoPrimaryKey().id = None  # pyright: ignore[reportAttributeAccessIssue]  # ty: ignore[missing-attribute]  # pyrefly: ignore[bad-assignment]
+    # Reading it back is still an `int`.
+    assert_type(Booking().id, int)
+    assert_type(BigAutoPrimaryKey().id, int)
+
+
 class MyModel(models.Model):
     nulltext = models.CharField(max_length=1, blank=True, null=True)
 
