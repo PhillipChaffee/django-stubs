@@ -47,6 +47,9 @@ FORM_MIXIN_CLASS_FULLNAME: Final = "django.views.generic.edit.FormMixin"
 REVERSE_ONE_TO_ONE_DESCRIPTOR: Final = "django.db.models.fields.related_descriptors.ReverseOneToOneDescriptor"
 REVERSE_MANY_TO_ONE_DESCRIPTOR: Final = "django.db.models.fields.related_descriptors.ReverseManyToOneDescriptor"
 MANY_TO_MANY_DESCRIPTOR: Final = "django.db.models.fields.related_descriptors.ManyToManyDescriptor"
+REVERSE_ACCESSOR_DESCRIPTORS: Final = frozenset(
+    (REVERSE_ONE_TO_ONE_DESCRIPTOR, REVERSE_MANY_TO_ONE_DESCRIPTOR, MANY_TO_MANY_DESCRIPTOR)
+)
 MANY_RELATED_MANAGER: Final = "django.db.models.fields.related_descriptors.ManyRelatedManager"
 RELATED_FIELDS_CLASSES: Final = frozenset(
     (

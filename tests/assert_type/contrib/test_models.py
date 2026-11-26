@@ -87,3 +87,25 @@ def user_fields_are_inferred() -> None:
     assert_type(user.date_joined, datetime)
     assert_type(user.groups.get(), Group)
     assert_type(user.user_permissions.get(), Permission)
+
+
+def log_entry_foreign_key_ids_are_inferred() -> None:
+    entry = LogEntry()
+    # The user model's primary key type is only known to the mypy plugin.
+    # TODO: https://github.com/typeddjango/django-stubs/issues/579
+    assert_type(entry.user_id, int)  # pyright: ignore[reportAssertTypeFailure]  # pyrefly: ignore[assert-type]  # ty: ignore[type-assertion-failure]
+    assert_type(entry.content_type_id, int | None)
+
+
+def reverse_accessors_between_contrib_models_are_declared() -> None:
+    assert_type(Permission().group_set.get(), Group)
+    assert_type(ContentType().permission_set.get(), Permission)
+    assert_type(ContentType().logentry_set.get(), LogEntry)
+    assert_type(User().logentry_set.get(), LogEntry)
+
+
+def reverse_accessors_to_the_user_model_are_declared() -> None:
+    # Only the mypy plugin resolves `AUTH_USER_MODEL`; other checkers see `AbstractBaseUser`.
+    # TODO: https://github.com/typeddjango/django-stubs/issues/579
+    assert_type(Group().user_set.get(), User)  # pyright: ignore[reportAssertTypeFailure]  # pyrefly: ignore[assert-type]  # ty: ignore[type-assertion-failure]
+    assert_type(Permission().user_set.get(), User)  # pyright: ignore[reportAssertTypeFailure]  # pyrefly: ignore[assert-type]  # ty: ignore[type-assertion-failure]

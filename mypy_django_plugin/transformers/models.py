@@ -571,7 +571,7 @@ class AddReverseLookups(ModelClassInitializer):
         to_model_cls = self.django_context.get_field_related_model_cls(relation)
         to_model_info = self.lookup_class_typeinfo_or_incomplete_defn_error(to_model_cls)
 
-        reverse_lookup_declared = attname in self.model_classdef.info.names
+        reverse_lookup_declared = self.is_declared_by_user(attname)
         if isinstance(relation, OneToOneRel):
             if not reverse_lookup_declared:
                 self.add_new_var_to_model_class(
@@ -670,15 +670,36 @@ class AddReverseLookups(ModelClassInitializer):
             fullname=new_related_manager_info.fullname,
         )
 
+    def is_declared_by_user(self, attname: str) -> bool:
+        # The stubs declare the reverse accessors between `django.contrib` models for other type
+        # checkers; the plugin knows the actual user model, through model and installed apps.
+        sym = self.model_classdef.info.names.get(attname)
+        return sym is not None and (sym.plugin_generated or not self.current_module.is_stub)
+
     @override
     def run_with_model_cls(self, model_cls: type[Model]) -> None:
         # add related managers etc.
         processing_incomplete = False
+        accessor_names = set()
         for relation in self.django_context.get_model_relations(model_cls):
+            accessor_names.add(relation.get_accessor_name())
             try:
                 self.process_relation(relation)
             except helpers.IncompleteDefnException:
                 processing_incomplete = True
+
+        if self.current_module.is_stub:
+            # Remove stub-declared reverse accessors that Django doesn't create in this project,
+            # e.g. `Group.user_set` for a user model without `PermissionsMixin`.
+            for name, sym in list(self.model_classdef.info.names.items()):
+                if (
+                    name not in accessor_names
+                    and not sym.plugin_generated
+                    and isinstance(sym.node, Var)
+                    and isinstance(typ := get_proper_type(sym.node.type), Instance)
+                    and typ.type.fullname in fullnames.REVERSE_ACCESSOR_DESCRIPTORS
+                ):
+                    del self.model_classdef.info.names[name]
 
         if processing_incomplete and not self.api.final_iteration:
             raise helpers.IncompleteDefnException
