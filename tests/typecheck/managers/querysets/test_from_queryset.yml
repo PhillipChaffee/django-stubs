@@ -1017,9 +1017,9 @@
         reveal_type(Manager[models.Model].from_queryset(NonQSGeneric[int]))
     out: |
         main:12: note: Revealed type is "type[django.db.models.manager.Manager[django.db.models.base.Model, django.db.models.query.QuerySet[django.db.models.base.Model, django.db.models.base.Model]]]"
-        main:12: error: Argument 1 to "from_queryset" of "BaseManager" has incompatible type "UnionType[QS1[Model, Model], QS2[Model, Model]]"; expected "type[QuerySet[Model, Model]]"  [arg-type]
+        main:12: error: Argument 1 to "from_queryset" of "BaseManager" has incompatible type "UnionType[QS1[Model, Model], QS2[Model, Model]]"; expected "type[Never]"  [arg-type]
+        main:17: error: Value of type variable "_QS" of "from_queryset" of "BaseManager" cannot be "NonQSGeneric[int]"  [type-var]
         main:17: note: Revealed type is "type[django.db.models.manager.Manager[django.db.models.base.Model, django.db.models.query.QuerySet[django.db.models.base.Model, django.db.models.base.Model]]]"
-        main:17: error: Argument 1 to "from_queryset" of "BaseManager" has incompatible type "type[NonQSGeneric[int]]"; expected "type[QuerySet[Model, Model]]"  [arg-type]
 
 -   case: test_reverse_manager_with_foreign_key
     main: |

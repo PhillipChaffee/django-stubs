@@ -41,11 +41,18 @@ class ConflictingBlogManager(models.Manager["Blog", BlogQuerySet]):
         return OtherBlogQuerySet(self.model, using=self._db)
 
 
+class PlainBlogManager(models.Manager["Blog"]): ...
+
+
+GeneratedBlogManager = PlainBlogManager.from_queryset(BlogQuerySet)
+
+
 class Blog(models.Model):
     created_at = models.DateTimeField()
     objects = BlogManager()
     conflicting = ConflictingBlogManager()
     from_queryset = BlogQuerySet.as_manager()
+    generated = GeneratedBlogManager()
 
 
 def takes_a_plain_manager(manager: models.Manager[Blog]) -> None: ...
@@ -58,6 +65,18 @@ def declared_manager_is_a_plain_manager_of_its_model() -> None:
 def as_manager_keeps_the_queryset_type() -> None:
     assert_type(Blog.from_queryset.all(), BlogQuerySet)
     assert_type(Blog.from_queryset.get(), Blog)
+
+
+def from_queryset_keeps_the_queryset_type() -> None:
+    assert_type(Blog.generated.all(), BlogQuerySet)
+    assert_type(Blog.generated.filter().queryset_method(), int)
+
+
+def queryset_methods_are_only_copied_onto_the_manager_by_the_mypy_plugin() -> None:
+    # Typing can't express "a manager with every method of its queryset type param"
+    # pyrefly copies them for `as_manager()` managers
+    assert_type(Blog.from_queryset.queryset_method(), int)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportAssertTypeFailure]  # ty: ignore[missing-attribute, type-assertion-failure]
+    assert_type(Blog.generated.queryset_method(), int)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportAssertTypeFailure]  # ty: ignore[missing-attribute, type-assertion-failure]  # pyrefly: ignore[missing-attribute, assert-type]
 
 
 def related_manager_call_switches_to_the_named_manager(related: RelatedManager[Blog, BlogQuerySet]) -> None:
