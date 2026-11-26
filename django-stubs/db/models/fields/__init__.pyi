@@ -1793,14 +1793,175 @@ class AutoFieldMeta(type): ...
 _ST_Auto_contra = TypeVar("_ST_Auto_contra", contravariant=True, default=int | str | None)
 _GT_Auto_co = TypeVar("_GT_Auto_co", covariant=True, default=int)
 
+# The auto fields spell out `AutoFieldMixin`'s `*args, **kwargs` to get the `null` overloads of the other fields.
 class AutoField(AutoFieldMixin, IntegerField[_ST_Auto_contra, _GT_Auto_co], metaclass=AutoFieldMeta):  # type: ignore[misc]
     _pyi_lookup_exact_type: str | int
     # pyrefly types the implicit `id` from these, not from the type parameters. TODO: drop once it does.
     _pyi_private_set_type: int | str | None
     _pyi_private_get_type: int
+    # `AutoField()` or `AutoField(null=False)`: keeps the type var defaults.
+    @overload
+    def __init__(
+        self,
+        verbose_name: _StrOrPromise | None = None,
+        name: str | None = None,
+        *,
+        null: Literal[False] = False,
+        primary_key: bool = False,
+        max_length: int | None = None,
+        db_default: type[NOT_PROVIDED] | Expression | Any = ...,
+        **kwargs: Unpack[FieldInitKwargs],
+    ) -> None: ...
+    # `AutoField(null=True)`: the `self` annotation gives the nullable type.
+    @overload
+    def __init__(
+        self: AutoField[int | str | None, int | None],
+        verbose_name: _StrOrPromise | None = None,
+        name: str | None = None,
+        *,
+        null: Literal[True],
+        primary_key: bool = False,
+        max_length: int | None = None,
+        db_default: type[NOT_PROVIDED] | Expression | Any = ...,
+        **kwargs: Unpack[FieldInitKwargs],
+    ) -> None: ...
+    # `Sub(null=True)` for `class Sub(AutoField): ...`: its bound types can't match the overload above.
+    @overload
+    def __init__(
+        self,
+        verbose_name: _StrOrPromise | None = None,
+        name: str | None = None,
+        *,
+        null: Literal[True],
+        primary_key: bool = False,
+        max_length: int | None = None,
+        db_default: type[NOT_PROVIDED] | Expression | Any = ...,
+        **kwargs: Unpack[FieldInitKwargs],
+    ) -> None: ...
+    # `AutoField(null=flag)` with `flag: bool`. Stays last, as `bool` also matches `True`.
+    @overload
+    @deprecated("`null` must be a literal `True` or `False` for the field type to be inferred")
+    def __init__(
+        self,
+        verbose_name: _StrOrPromise | None = None,
+        name: str | None = None,
+        *,
+        null: bool,
+        primary_key: bool = False,
+        max_length: int | None = None,
+        db_default: type[NOT_PROVIDED] | Expression | Any = ...,
+        **kwargs: Unpack[FieldInitKwargs],
+    ) -> None: ...
 
-class BigAutoField(AutoFieldMixin, BigIntegerField[_ST_Auto_contra, _GT_Auto_co]): ...  # type: ignore[misc]
-class SmallAutoField(AutoFieldMixin, SmallIntegerField[_ST_Auto_contra, _GT_Auto_co]): ...  # type: ignore[misc]
+class BigAutoField(AutoFieldMixin, BigIntegerField[_ST_Auto_contra, _GT_Auto_co]):  # type: ignore[misc]
+    # `BigAutoField()` or `BigAutoField(null=False)`: keeps the type var defaults.
+    @overload
+    def __init__(
+        self,
+        verbose_name: _StrOrPromise | None = None,
+        name: str | None = None,
+        *,
+        null: Literal[False] = False,
+        primary_key: bool = False,
+        max_length: int | None = None,
+        db_default: type[NOT_PROVIDED] | Expression | Any = ...,
+        **kwargs: Unpack[FieldInitKwargs],
+    ) -> None: ...
+    # `BigAutoField(null=True)`: the `self` annotation gives the nullable type.
+    @overload
+    def __init__(
+        self: BigAutoField[int | str | None, int | None],
+        verbose_name: _StrOrPromise | None = None,
+        name: str | None = None,
+        *,
+        null: Literal[True],
+        primary_key: bool = False,
+        max_length: int | None = None,
+        db_default: type[NOT_PROVIDED] | Expression | Any = ...,
+        **kwargs: Unpack[FieldInitKwargs],
+    ) -> None: ...
+    # `Sub(null=True)` for `class Sub(BigAutoField): ...`: its bound types can't match the overload above.
+    @overload
+    def __init__(
+        self,
+        verbose_name: _StrOrPromise | None = None,
+        name: str | None = None,
+        *,
+        null: Literal[True],
+        primary_key: bool = False,
+        max_length: int | None = None,
+        db_default: type[NOT_PROVIDED] | Expression | Any = ...,
+        **kwargs: Unpack[FieldInitKwargs],
+    ) -> None: ...
+    # `BigAutoField(null=flag)` with `flag: bool`. Stays last, as `bool` also matches `True`.
+    @overload
+    @deprecated("`null` must be a literal `True` or `False` for the field type to be inferred")
+    def __init__(
+        self,
+        verbose_name: _StrOrPromise | None = None,
+        name: str | None = None,
+        *,
+        null: bool,
+        primary_key: bool = False,
+        max_length: int | None = None,
+        db_default: type[NOT_PROVIDED] | Expression | Any = ...,
+        **kwargs: Unpack[FieldInitKwargs],
+    ) -> None: ...
+
+class SmallAutoField(AutoFieldMixin, SmallIntegerField[_ST_Auto_contra, _GT_Auto_co]):  # type: ignore[misc]
+    # `SmallAutoField()` or `SmallAutoField(null=False)`: keeps the type var defaults.
+    @overload
+    def __init__(
+        self,
+        verbose_name: _StrOrPromise | None = None,
+        name: str | None = None,
+        *,
+        null: Literal[False] = False,
+        primary_key: bool = False,
+        max_length: int | None = None,
+        db_default: type[NOT_PROVIDED] | Expression | Any = ...,
+        **kwargs: Unpack[FieldInitKwargs],
+    ) -> None: ...
+    # `SmallAutoField(null=True)`: the `self` annotation gives the nullable type.
+    @overload
+    def __init__(
+        self: SmallAutoField[int | str | None, int | None],
+        verbose_name: _StrOrPromise | None = None,
+        name: str | None = None,
+        *,
+        null: Literal[True],
+        primary_key: bool = False,
+        max_length: int | None = None,
+        db_default: type[NOT_PROVIDED] | Expression | Any = ...,
+        **kwargs: Unpack[FieldInitKwargs],
+    ) -> None: ...
+    # `Sub(null=True)` for `class Sub(SmallAutoField): ...`: its bound types can't match the overload above.
+    @overload
+    def __init__(
+        self,
+        verbose_name: _StrOrPromise | None = None,
+        name: str | None = None,
+        *,
+        null: Literal[True],
+        primary_key: bool = False,
+        max_length: int | None = None,
+        db_default: type[NOT_PROVIDED] | Expression | Any = ...,
+        **kwargs: Unpack[FieldInitKwargs],
+    ) -> None: ...
+    # `SmallAutoField(null=flag)` with `flag: bool`. Stays last, as `bool` also matches `True`.
+    @overload
+    @deprecated("`null` must be a literal `True` or `False` for the field type to be inferred")
+    def __init__(
+        self,
+        verbose_name: _StrOrPromise | None = None,
+        name: str | None = None,
+        *,
+        null: bool,
+        primary_key: bool = False,
+        max_length: int | None = None,
+        db_default: type[NOT_PROVIDED] | Expression | Any = ...,
+        **kwargs: Unpack[FieldInitKwargs],
+    ) -> None: ...
 
 __all__ = [
     "BLANK_CHOICE_DASH",
