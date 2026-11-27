@@ -40,6 +40,7 @@ from mypy.types import (
     get_proper_type,
 )
 from mypy.types import Type as MypyType
+from mypy.types_utils import remove_optional
 from typing_extensions import override
 
 from mypy_django_plugin.errorcodes import MANAGER_MISSING
@@ -362,6 +363,10 @@ class AddRelatedModelsId(ModelClassInitializer):
             set_type, get_type = get_field_descriptor_types(
                 field_info, self.api, is_set_nullable=field.null, is_get_nullable=field.null
             )
+            if not field.null:
+                # The target's set type includes `None` for auto fields (cleared to copy a row);
+                # a non-null foreign key column doesn't accept it.
+                set_type = remove_optional(set_type)
             self.add_new_var_to_model_class(field.attname, Instance(field_info, [set_type, get_type]))
 
 

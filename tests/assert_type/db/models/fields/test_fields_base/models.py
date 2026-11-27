@@ -42,6 +42,25 @@ def test_do_not_add_id_if_field_with_primary_key_True_defined() -> None:
     CustomPrimaryKey().id  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]  # pyrefly: ignore[missing-attribute]  # ty: ignore[missing-attribute]
 
 
+class Article(models.Model):
+    id = models.BigAutoField(primary_key=True)
+
+
+def clearing_the_auto_primary_key_saves_a_copy() -> None:
+    # https://docs.djangoproject.com/en/stable/topics/db/queries/#copying-model-instances
+    article = Article.objects.get()
+    article.id = None
+    article._state.adding = True
+    article.save()
+
+    Booking().id = None
+    assert_type(Article().id, int)
+
+
+def clearing_a_custom_primary_key_is_an_error() -> None:
+    CustomPrimaryKey().my_pk = None  # type: ignore[assignment]  # pyright: ignore[reportAttributeAccessIssue]  # ty: ignore[invalid-assignment]  # pyrefly: ignore[bad-argument-type]
+
+
 class MyModel(models.Model):
     nulltext = models.CharField(max_length=1, blank=True, null=True)
 
@@ -122,6 +141,7 @@ class SmallAuto(models.Model):
 def test_small_auto_field_class_presents_as_int() -> None:
     obj = SmallAuto()
     assert_type(obj.small, int)
+    obj.small = None
 
 
 class RenamedField(models.Model):
