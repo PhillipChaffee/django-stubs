@@ -1,6 +1,7 @@
 import datetime as dt
 from typing import Any, ClassVar, Self
 
+from django._mypy import MYPY
 from django.contrib.sessions.backends.base import SessionBase
 from django.db import models
 from typing_extensions import TypeVar
@@ -17,10 +18,15 @@ class AbstractBaseSession(models.Model):
     expire_date: models.DateTimeField[str | dt.datetime | dt.date, dt.datetime]
     objects: ClassVar[BaseSessionManager[Self]]
 
-    class Meta:
-        abstract: ClassVar[bool]
-        verbose_name: ClassVar[str]
-        verbose_name_plural: ClassVar[str]
+    # Typed for mypy only: other checkers report a subclass's own `class Meta:` as an incompatible override.
+    if MYPY:  # ruff: ignore[complex-if-statement-in-stub]
+        class Meta:
+            abstract: ClassVar[bool]
+            verbose_name: ClassVar[str]
+            verbose_name_plural: ClassVar[str]
+
+    else:
+        Meta: Any
 
     @classmethod
     def get_session_store_class(cls) -> type[SessionBase] | None: ...

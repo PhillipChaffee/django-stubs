@@ -132,8 +132,26 @@ class Manager(BaseManager[_T_co, _QS_co]):
     ) -> RawQuerySet[_T_co]: ...
     # The type of values may be overridden to be more specific in the mypy plugin, depending on the fields param
     def values(self, *fields: str | Combinable, **expressions: Any) -> QuerySet[_T_co, dict[str, Any]]: ...
-    # The type of values_list may be overridden to be more specific in the mypy plugin, depending on the fields param
-    def values_list(self, *fields: str | Combinable, flat: bool = ..., named: bool = ...) -> QuerySet[_T_co, Any]: ...
+    # The row types of values_list may be overridden to be more specific in the mypy plugin, depending on the fields param
+    @overload
+    def values_list(
+        self, field: str | Combinable = ..., /, *, flat: Literal[True], named: Literal[False] = False
+    ) -> QuerySet[_T_co, Any]: ...
+    @overload
+    def values_list(
+        self, *fields: str | Combinable, flat: Literal[False] = False, named: Literal[True]
+    ) -> QuerySet[_T_co, Any]: ...
+    @overload
+    def values_list(
+        self, *fields: str | Combinable, flat: Literal[False] = False, named: Literal[False] = False
+    ) -> QuerySet[_T_co, tuple[Any, ...]]: ...
+    @overload
+    @deprecated(
+        "`flat` and `named` must be literal `True` or `False`; `flat=True` takes at most one field and excludes `named=True`"
+    )
+    def values_list(
+        self, *fields: str | Combinable, flat: bool = False, named: bool = False
+    ) -> QuerySet[_T_co, Any]: ...
     def dates(
         self,
         field_name: str,

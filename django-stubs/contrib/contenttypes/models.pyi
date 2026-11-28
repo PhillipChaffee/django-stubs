@@ -1,7 +1,10 @@
 from typing import Any, ClassVar
 
+from django.contrib.admin.models import LogEntry
+from django.contrib.auth.models import Permission
 from django.db import models
 from django.db.models.base import Model
+from django.db.models.fields.related_descriptors import ReverseManyToOneDescriptor
 from django.db.models.query import QuerySet
 
 class ContentTypeManager(models.Manager[ContentType]):
@@ -17,6 +20,10 @@ class ContentType(models.Model):
     app_label: models.CharField[str | int, str]
     model: models.CharField[str | int, str]
     objects: ClassVar[ContentTypeManager]
+    # Reverse accessors of `Permission.content_type` and `LogEntry.content_type`, only added when
+    # `django.contrib.auth` and `django.contrib.admin`, respectively, are installed.
+    permission_set: ClassVar[ReverseManyToOneDescriptor[Permission]]
+    logentry_set: ClassVar[ReverseManyToOneDescriptor[LogEntry]]
     @property
     def name(self) -> str: ...
     @property

@@ -32,6 +32,18 @@ class NullFromBool(models.Model):
     text = models.CharField(max_length=100, null=nullable())  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]  # ty: ignore[deprecated]  # pyrefly: ignore[deprecated]
 
 
+class NullableAutoPrimaryKey(models.Model):
+    # Django's system checks reject a nullable primary key (fields.E007), except on Oracle.
+    number = models.BigAutoField(primary_key=True, null=True)
+
+
+def auto_fields_read_null_true_as_optional() -> None:
+    assert_type(models.AutoField(primary_key=True, null=True), models.AutoField[int | str | None, int | None])
+    assert_type(models.AutoField(primary_key=True, null=False), models.AutoField[int | str | None, int])
+    assert_type(models.SmallAutoField(primary_key=True, null=True), models.SmallAutoField[int | str | None, int | None])
+    assert_type(NullableAutoPrimaryKey().number, int | None)
+
+
 class BlankNotNull(models.Model):
     notnulltext = models.CharField(max_length=1, blank=True, null=False)
 

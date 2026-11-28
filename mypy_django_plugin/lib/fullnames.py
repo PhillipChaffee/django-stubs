@@ -17,6 +17,7 @@ FOREIGN_KEY_FULLNAME: Final = "django.db.models.fields.related.ForeignKey"
 ONETOONE_FIELD_FULLNAME: Final = "django.db.models.fields.related.OneToOneField"
 MANYTOMANY_FIELD_FULLNAME: Final = "django.db.models.fields.related.ManyToManyField"
 DUMMY_SETTINGS_BASE_CLASS: Final = "django.conf._DjangoConfLazyObject"
+DEFAULT_SETTINGS_CLASS: Final = "django.conf._DjangoSettings"
 AUTH_USER_MODEL_FULLNAME: Final = "django.conf.settings.AUTH_USER_MODEL"
 
 QUERYSET_CLASS_FULLNAME: Final = "django.db.models.query.QuerySet"
@@ -47,6 +48,9 @@ FORM_MIXIN_CLASS_FULLNAME: Final = "django.views.generic.edit.FormMixin"
 REVERSE_ONE_TO_ONE_DESCRIPTOR: Final = "django.db.models.fields.related_descriptors.ReverseOneToOneDescriptor"
 REVERSE_MANY_TO_ONE_DESCRIPTOR: Final = "django.db.models.fields.related_descriptors.ReverseManyToOneDescriptor"
 MANY_TO_MANY_DESCRIPTOR: Final = "django.db.models.fields.related_descriptors.ManyToManyDescriptor"
+REVERSE_ACCESSOR_DESCRIPTORS: Final = frozenset(
+    (REVERSE_ONE_TO_ONE_DESCRIPTOR, REVERSE_MANY_TO_ONE_DESCRIPTOR, MANY_TO_MANY_DESCRIPTOR)
+)
 MANY_RELATED_MANAGER: Final = "django.db.models.fields.related_descriptors.ManyRelatedManager"
 RELATED_FIELDS_CLASSES: Final = frozenset(
     (

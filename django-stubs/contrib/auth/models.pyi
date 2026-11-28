@@ -2,6 +2,8 @@ import datetime as dt
 from collections.abc import Iterable
 from typing import Any, ClassVar, Literal, Never, Self, TypeAlias
 
+from django._mypy import MYPY
+from django.contrib.admin.models import LogEntry
 from django.contrib.auth.base_user import AbstractBaseUser as AbstractBaseUser
 from django.contrib.auth.base_user import BaseUserManager as BaseUserManager
 from django.contrib.auth.validators import UnicodeUsernameValidator
@@ -9,6 +11,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import QuerySet
 from django.db.models.base import Model
+from django.db.models.fields.related_descriptors import ManyToManyDescriptor, ReverseManyToOneDescriptor
 from django.db.models.manager import EmptyManager
 from django.utils.functional import _StrOrPromise
 from typing_extensions import TypeVar
@@ -42,6 +45,10 @@ class Permission(models.Model):
     name: models.CharField[str | int, str]
     content_type: models.ForeignKey[ContentType, ContentType]
     codename: models.CharField[str | int, str]
+    # Reverse accessors of `Group.permissions` and `PermissionsMixin.user_permissions`.
+    # Django only adds `user_set` when the user model inherits `PermissionsMixin`.
+    group_set: ClassVar[ManyToManyDescriptor[Group]]
+    user_set: ClassVar[ManyToManyDescriptor[_User]]
     @property
     def user_perm_str(self) -> str: ...
     def natural_key(self) -> tuple[str, str, str]: ...
@@ -57,6 +64,8 @@ class Group(models.Model):
 
     name: models.CharField[str | int, str]
     permissions = models.ManyToManyField(Permission)
+    # Reverse accessor of `PermissionsMixin.groups`, only added when the user model inherits `PermissionsMixin`.
+    user_set: ClassVar[ManyToManyDescriptor[_User]]
     def natural_key(self) -> tuple[str]: ...
 
 class UserManager(BaseUserManager[_UserType]):
@@ -86,8 +95,13 @@ class PermissionsMixin(models.Model):
     groups = models.ManyToManyField(Group)
     user_permissions = models.ManyToManyField(Permission)
 
-    class Meta:
-        abstract: ClassVar[bool]
+    # Typed for mypy only: other checkers report a subclass's own `class Meta:` as an incompatible override.
+    if MYPY:  # ruff: ignore[complex-if-statement-in-stub]
+        class Meta:
+            abstract: ClassVar[bool]
+
+    else:
+        Meta: Any
 
     def get_user_permissions(self, obj: Model | None = ...) -> set[str]: ...
     async def aget_user_permissions(self, obj: Model | None = ...) -> set[str]: ...
@@ -105,10 +119,15 @@ class PermissionsMixin(models.Model):
 class AbstractUser(AbstractBaseUser, PermissionsMixin):
     username_validator: UnicodeUsernameValidator
 
-    class Meta:
-        abstract: ClassVar[bool]
-        verbose_name: ClassVar[str]
-        verbose_name_plural: ClassVar[str]
+    # Typed for mypy only: other checkers report a subclass's own `class Meta:` as an incompatible override.
+    if MYPY:  # ruff: ignore[complex-if-statement-in-stub]
+        class Meta:
+            abstract: ClassVar[bool]
+            verbose_name: ClassVar[str]
+            verbose_name_plural: ClassVar[str]
+
+    else:
+        Meta: Any
 
     username: models.CharField[str | int, str]
     first_name: models.CharField[str | int, str]
@@ -129,7 +148,9 @@ class AbstractUser(AbstractBaseUser, PermissionsMixin):
         self, subject: _StrOrPromise, message: _StrOrPromise, from_email: str | None = ..., **kwargs: Any
     ) -> None: ...
 
-class User(AbstractUser): ...
+class User(AbstractUser):
+    # Reverse accessor of `LogEntry.user`, only added when `django.contrib.admin` is installed.
+    logentry_set: ClassVar[ReverseManyToOneDescriptor[LogEntry]]
 
 class AnonymousUser:
     id: None

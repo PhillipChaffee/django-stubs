@@ -178,3 +178,39 @@
     custom_settings: |
         INSTALLED_APPS = ('django.contrib.contenttypes', 'django.contrib.auth')
         AUTH_USER_MODEL='auth.User'
+
+-   case: test_contrib_reverse_relations_follow_the_project
+    main: |
+        from typing_extensions import reveal_type
+        from django.contrib.auth.models import Group, Permission
+        from django.contrib.contenttypes.models import ContentType
+        reveal_type(Permission().group_set)  # N: Revealed type is "django.contrib.auth.models.Group_ManyRelatedManager[django.contrib.auth.models.Group_permissions]"
+        reveal_type(Group().user_set)  # N: Revealed type is "myapp.models.MyUser_ManyRelatedManager[myapp.models.MyUser_groups]"
+        reveal_type(ContentType().permission_set)  # N: Revealed type is "django.contrib.auth.models.Permission_RelatedManager"
+        ContentType().logentry_set  # E: "ContentType" has no attribute "logentry_set"  [attr-defined]
+    custom_settings: |
+        INSTALLED_APPS = ('django.contrib.contenttypes', 'django.contrib.auth', 'myapp')
+        AUTH_USER_MODEL = 'myapp.MyUser'
+    files:
+        - path: myapp/__init__.py
+        - path: myapp/models.py
+          content: |
+              from django.contrib.auth.models import AbstractUser
+
+              class MyUser(AbstractUser): ...
+
+-   case: test_contrib_reverse_relations_to_a_user_model_without_permissions_mixin
+    main: |
+        from django.contrib.auth.models import Group, Permission
+        Group().user_set  # E: "Group" has no attribute "user_set"  [attr-defined]
+        Permission().user_set  # E: "Permission" has no attribute "user_set"  [attr-defined]
+    custom_settings: |
+        INSTALLED_APPS = ('django.contrib.contenttypes', 'django.contrib.auth', 'myapp')
+        AUTH_USER_MODEL = 'myapp.MyUser'
+    files:
+        - path: myapp/__init__.py
+        - path: myapp/models.py
+          content: |
+              from django.contrib.auth.base_user import AbstractBaseUser
+
+              class MyUser(AbstractBaseUser): ...

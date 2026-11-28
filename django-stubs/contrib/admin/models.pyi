@@ -42,6 +42,9 @@ class LogEntry(models.Model):
     action_time: models.DateTimeField[str | dt.datetime | dt.date, dt.datetime]
     user: models.ForeignKey[_User, _User]
     content_type: models.ForeignKey[ContentType | None, ContentType | None]
+    # The type of the user model's primary key is project-specific.
+    user_id: Any
+    content_type_id: int | None
     object_id: models.TextField[str | None, str | None]
     object_repr: models.CharField[str | int, str]
     action_flag: models.PositiveSmallIntegerField[float | int | str, int]

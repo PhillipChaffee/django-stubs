@@ -11,7 +11,7 @@ from django.db.models.fetch_modes import FetchMode
 from django.db.models.sql.query import Query, RawQuery
 from django.db.models.utils import AltersData
 from django.utils.functional import cached_property
-from typing_extensions import TypeVar, override
+from typing_extensions import TypeVar, deprecated, override
 
 _T_co = TypeVar("_T_co", covariant=True)
 _ContainsT = TypeVar("_ContainsT")
@@ -198,7 +198,29 @@ class QuerySet(AltersData, _SupportsContains[object], Iterable[_Row_co], Sized, 
     ) -> RawQuerySet[_Model_co]: ...
     # The type of values may be overridden to be more specific in the mypy plugin, depending on the fields param
     def values(self, *fields: str | Combinable, **expressions: Any) -> QuerySet[_Model_co, dict[str, Any]]: ...
-    # The type of values_list may be overridden to be more specific in the mypy plugin, depending on the fields param
+    # The row types of values_list may be overridden to be more specific in the mypy plugin, depending on the fields param.
+    # `values_list(field, flat=True)`: one value per row, `flat=True` takes at most one field.
+    @overload
+    def values_list(
+        self, field: str | Combinable = ..., /, *, flat: Literal[True], named: Literal[False] = False
+    ) -> QuerySet[_Model_co, Any]: ...
+    # `values_list(*fields, named=True)`: a named tuple per row, its attributes are the field names.
+    @overload
+    def values_list(
+        self, *fields: str | Combinable, flat: Literal[False] = False, named: Literal[True]
+    ) -> QuerySet[_Model_co, Any]: ...
+    # `values_list(*fields)`: a tuple per row.
+    @overload
+    def values_list(
+        self, *fields: str | Combinable, flat: Literal[False] = False, named: Literal[False] = False
+    ) -> QuerySet[_Model_co, tuple[Any, ...]]: ...
+    # Stays last, as `bool` also matches `True`. Calls Django rejects, `values_list("a", "b", flat=True)` and
+    # `values_list("a", flat=True, named=True)`, land here: other checkers report the deprecation, the mypy plugin
+    # reports its own error (without this overload mypy would only report "No overload variant").
+    @overload
+    @deprecated(
+        "`flat` and `named` must be literal `True` or `False`; `flat=True` takes at most one field and excludes `named=True`"
+    )
     def values_list(
         self, *fields: str | Combinable, flat: bool = False, named: bool = False
     ) -> QuerySet[_Model_co, Any]: ...

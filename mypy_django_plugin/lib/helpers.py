@@ -345,6 +345,14 @@ def is_optional(typ: MypyType) -> bool:
     return isinstance(typ, UnionType) and any(isinstance(get_proper_type(item), NoneTyp) for item in typ.items)
 
 
+def remove_optional_type(typ: MypyType) -> MypyType:
+    """The inverse of `make_optional_type`: drop `None` from a union."""
+    proper_type = get_proper_type(typ)
+    if not isinstance(proper_type, UnionType):
+        return typ
+    return UnionType.make_union([item for item in proper_type.items if not isinstance(get_proper_type(item), NoneTyp)])
+
+
 def get_literal_str_type(typ: Type) -> str | None:
     """Extract the str value of a string like type if possible"""
     values = try_getting_str_literals_from_type(typ)
