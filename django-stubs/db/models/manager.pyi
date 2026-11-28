@@ -12,6 +12,7 @@ _T_co = TypeVar("_T_co", bound=Model, covariant=True)
 _M = TypeVar("_M", bound=Model)
 # We could technically use `bound=QuerySet[Model]` but this currently trip pyrefly for very little value
 _QS_co = TypeVar("_QS_co", bound=QuerySet[Any], covariant=True, default=QuerySet[_T_co])
+_QS = TypeVar("_QS", bound=QuerySet[Any])
 
 @final
 @type_check_only
@@ -37,8 +38,13 @@ class BaseManager(Generic[_T_co, _QS_co]):
         self,
     ) -> tuple[bool, str | None, str | None, Sequence[Any] | None, dict[str, Any] | None]: ...
     def check(self, **kwargs: Any) -> list[CheckMessage]: ...
+    # The generated class is a `Manager` that returns `queryset_class` from `.all()`, `.filter()`, ... Typing can't
+    # express "the subclass of `cls` with another queryset type param", so a custom manager's own methods are lost,
+    # and so are the methods `from_queryset` copies from `queryset_class` (the mypy plugin adds both).
     @classmethod
-    def from_queryset(cls, queryset_class: type[QuerySet[_T_co]], class_name: str | None = None) -> type[Self]: ...
+    def from_queryset(
+        cls: type[BaseManager[_M, Any]], queryset_class: type[_QS], class_name: str | None = None
+    ) -> type[Manager[_M, _QS]]: ...
     @classmethod
     def _get_queryset_methods(cls, queryset_class: type) -> dict[str, Any]: ...
     def contribute_to_class(self, cls: type[Model], name: str) -> None: ...
@@ -50,6 +56,11 @@ class BaseManager(Generic[_T_co, _QS_co]):
     # Mirrors `ManagerDescriptor`: a manager is unreachable from an instance of its own model, but stays reachable
     # from anything else (plain classes, protocols, other models' instances). An unparametrized manager solves `_M`
     # to `Any`, so the `None` overload keeps class access reachable and `cls: type[Model]` plain-class access.
+    # `objects = models.Manager()` in a model body leaves the model unsolved: bind it to the class the manager is
+    # read from, which is also right for subclasses (`Novel.objects` for `class Novel(Book)`). `_HasModel` is
+    # invariant, so a manager declared for a model (`Manager[Book]`) skips this overload and stays `Self`.
+    @overload
+    def __get__(self: _HasModel[Model], instance: None, cls: type[_M]) -> Manager[_M]: ...
     @overload
     def __get__(self, instance: None, cls: type[Any] | None = None) -> Self: ...
     @overload

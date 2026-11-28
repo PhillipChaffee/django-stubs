@@ -37,9 +37,12 @@ class OtherModel(models.Model):
         app_label = "myapp"
 
 
-# `from_queryset` returns `type[Self]`, preserving manager subclasses and their members
-assert_type(CustomManager.from_queryset(OtherQuerySet), type[CustomManager])
-assert_type(CustomManager.from_queryset(OtherQuerySet)().manager_method(), str)
+# `from_queryset` returns a `Manager` of the queryset class. Only the mypy plugin keeps the manager subclass and
+# its members: typing can't spell "`cls` re-parametrized with another queryset type"
+# The mypy plugin only builds the generated class for an assignment, `NewManager = CustomManager.from_queryset(...)`
+assert_type(CustomManager.from_queryset(OtherQuerySet)().all(), OtherQuerySet)  # type: ignore[assert-type]
+assert_type(CustomManager.from_queryset(OtherQuerySet)().get(), OtherModel)
+CustomManager.from_queryset(OtherQuerySet)().manager_method()  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]  # ty: ignore[missing-attribute]  # pyrefly: ignore[missing-attribute]
 
 
 def managers_are_not_querysets(manager: models.Manager[OtherModel]) -> None:

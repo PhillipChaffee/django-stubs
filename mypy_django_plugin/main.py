@@ -43,6 +43,7 @@ from mypy_django_plugin.transformers.managers import (
     add_as_manager_to_queryset_class,
     create_new_manager_class_from_from_queryset_method,
     determine_proper_manager_type,
+    from_queryset_returns_the_called_manager_class,
     refine_related_manager,
     resolve_manager_method,
 )
@@ -265,6 +266,9 @@ class NewSemanalDjangoPlugin(Plugin):
             and not info.has_base(fullnames.STATE_APPS_FULLNAME)
         ):
             return partial(apps.resolve_model_for_get_model, django_context=self.django_context)
+
+        if method_name == "from_queryset" and info.has_base(fullnames.BASE_MANAGER_CLASS_FULLNAME):
+            return from_queryset_returns_the_called_manager_class
 
         if helpers.has_any_of_bases(info, [fullnames.QUERYSET_CLASS_FULLNAME, fullnames.MANAGER_CLASS_FULLNAME]):
             return partial(querysets.merge_annotations_from_custom_method, django_context=self.django_context)

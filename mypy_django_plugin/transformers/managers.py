@@ -22,6 +22,7 @@ from mypy.subtypes import find_member
 from mypy.types import (
     AnyType,
     CallableType,
+    FunctionLike,
     Instance,
     ProperType,
     TypeOfAny,
@@ -153,6 +154,25 @@ def resolve_manager_method(ctx: AttributeContext) -> MypyType:
         return UnionType(resolved)
     ctx.api.fail(f'Unable to resolve return type of queryset/manager method "{method_name}"', ctx.context)
     return AnyType(TypeOfAny.from_error)
+
+
+def from_queryset_returns_the_called_manager_class(ctx: MethodContext) -> MypyType:
+    """Keep `type[<called manager class>]` as the `from_queryset()` call type.
+
+    The stub's `type[Manager[_M, _QS]]` serves checkers without the plugin. The plugin builds a manager
+    class with the queryset methods instead (`create_new_manager_class_from_from_queryset_method`).
+    """
+    callee = ctx.type
+    if isinstance(callee, FunctionLike) and callee.is_type_obj():
+        # `Manager[MyModel].from_queryset(...)` keeps its type args, bare `Manager.from_queryset(...)` gets `Any`
+        constructor = callee.items[0]
+        ret_type = get_proper_type(constructor.ret_type)
+        if not constructor.variables and isinstance(ret_type, Instance):
+            return TypeType(ret_type)
+        return TypeType(fill_typevars_with_any(callee.type_object()))
+    if isinstance(callee, TypeType):
+        return callee
+    return ctx.default_return_type
 
 
 def refine_related_manager(ctx: MethodContext) -> MypyType:
